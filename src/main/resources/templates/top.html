@@ -31,6 +31,22 @@
                 </div>
             </form>
         </div>
+コメント内容表示と
+       <div class="comments-icon" th:each="comments : ${comments}">
+            <div th:if="${comments.reportId == content.id}">
+                コメント : <span th:text="${comments.content}"/>
+            </div>
+        </div>
+
+<!--コメント入力フォームとコメントボタンの表示-->
+        <form method="post" action="/commentAdd">
+            <div class="form-area">
+                <label>コメント入力欄</label>
+                <textarea class="tweet-box" name="content" size="20"  maxlength="200"></textarea><br/>
+                <input type="submit" value="コメント" />
+                <input type="hidden" name="reportId" th:value="${content.id}"/>
+            </div>
+        </form>
     </div>
 </div>
 </body>
