@@ -47,7 +47,7 @@ public class CommentService {
      * コメント一件取得
      */
     public List<CommentForm> findAllComment() {
-        List<Comment> results = commentRepository.findAll();
+        List<Comment> results = commentRepository.findAllByOrderByIdDesc();
         List<CommentForm> comments = setCommentForm(results);
         return comments;
     }
@@ -69,6 +69,31 @@ public class CommentService {
             comments.add(comment);
         }
         return comments;
+
+    }
+    /*
+     * 編集したい投稿のレコード1件取得
+     */
+    public CommentForm editComment(Integer id) {
+        List<Comment> results = new ArrayList<>();
+        results.add((Comment) commentRepository.findById(id).orElse(null));
+        List<CommentForm> Comments = setCommentForm(results);
+        //リストの最初の一件目だけ返す。
+        return Comments.get(0);
+    }
+
+    /*
+     * コメント編集処理
+     */
+    public void updateComment(CommentForm comment) {
+        //setCommentEntityを再利用する
+        Comment Comments= setCommentEntity(comment);
+        commentRepository.save(Comments);
+    }
+
+    //投稿を削除
+    public void commentDeleteById (Integer id) {
+        commentRepository.deleteById(id);
     }
 }
 

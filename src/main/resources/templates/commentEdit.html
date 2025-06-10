@@ -10,11 +10,13 @@
     <h2>編集</h2>
 </div>
 <div class="main-contents">
-    <form th:action="@{/update/{id}(id=${formModel.id})}" th:object="${formModel}" th:method="put">
+    <form th:action="@{/commentUpdate/{id}(id=${formModel.id})}" th:object="${formModel}" th:method="put">
         <div class="form-area">
             <label>投稿内容</label>
             <textarea class="tweet-box" name="content" th:field="*{content}" size="20" maxlength="200" /></textarea><br/>
             <input type="submit" value="更新"/>
+            <!--ここでreportIdも送ってあげないと、null判定されてエラーになる-->
+            <input type="hidden" name="reportId" th:value="${formModel.reportId}"/>
         </div>
     </form>
 </div>

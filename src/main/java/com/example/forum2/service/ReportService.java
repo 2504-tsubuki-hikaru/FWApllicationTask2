@@ -3,10 +3,14 @@ package com.example.forum2.service;
 import com.example.forum2.controller.form.ReportForm;
 import com.example.forum2.repository.ReportRepository;
 import com.example.forum2.repository.entity.Report;
+import io.micrometer.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -17,8 +21,31 @@ public class ReportService {
     /*
      * レコード全件取得処理
      */
-    public List<ReportForm> findAllReport() {
-        List<Report> results = reportRepository.findAllByOrderByIdDesc();
+    public List<ReportForm> findAllReport(String start, String end) throws ParseException {
+
+        String strStartDate;
+        String strEndDate;
+
+        if (!StringUtils.isBlank(start)) {
+            strStartDate = start + " 00:00:00";
+        }  else {
+            strStartDate = "2020-01-01 00:00:00";
+            }
+
+        if (!StringUtils.isBlank(end)) {
+            strEndDate = end + " 23:59:59";
+        }  else {
+            //endの中身が空の時は現在時刻を取得
+            Date date =new Date();
+            SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy-MM-dd");
+            strEndDate = sdFormat.format(date) + " 23:59:59";
+            }
+
+        SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startDate = sdFormat.parse(strStartDate);
+        Date endDate = sdFormat.parse(strEndDate);
+
+        List<Report> results = reportRepository. findByUpdatedDateBetweenOrderByUpdatedDateDesc(startDate, endDate);
         List<ReportForm> reports = setReportForm(results);
         return reports;
     }
