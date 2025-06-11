@@ -10,11 +10,19 @@
   <h2>新規投稿</h2>
 </div>
 <div class="main-contents">
+<!--エラーメッセージの表示-->
+  <!--このformModelにはエラーメッセージが入っている。-->
+  <div th:object="${formModel}" >
+<!--    th:errors="*{content}"の役割はBindingResult の中で、contentフィールド(contentにつけたNotBlank)に関連付けられているエラーメッセージを出力-->
+    <div class="message-icon" th:if="${#fields.hasErrors('content')}"  th:errors="*{content}">
+    </div>
+  </div>
+<!--新規投稿テキストエリア-->
   <form method="post" action="/add" th:object="${formModel}">
     <div class="form-area">
-      <label>投稿内容</label>
-      <textarea class="tweet-box" th:field="*{content}" size="20" maxlength="200" /></textarea><br/>
-      <input type="submit" value="投稿" />
+        <label>投稿内容</label>
+        <textarea class="tweet-box" th:field="*{content}" size="20" maxlength="200" /></textarea><br/>
+       <input type="submit" value="投稿" />
     </div>
   </form>
 </div>

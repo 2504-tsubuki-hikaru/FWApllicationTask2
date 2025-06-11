@@ -1,15 +1,21 @@
 package com.example.forum2.controller;
 
+
 import com.example.forum2.controller.form.CommentForm;
 import com.example.forum2.controller.form.ReportForm;
 import com.example.forum2.service.CommentService;
 import com.example.forum2.service.ReportService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.xml.stream.events.Comment;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -18,6 +24,8 @@ public class ForumController {
     ReportService reportService;
     @Autowired
     CommentService commentService;
+    @Autowired
+    HttpSession session;
 
     /*
      * 投稿内容表示処理
@@ -28,14 +36,18 @@ public class ForumController {
         ModelAndView mav = new ModelAndView();
         // 投稿を全件取得
         List<ReportForm> contentData = reportService.findAllReport(start, end);
+        //コメント一件取得
+        List<CommentForm> commentData = commentService.findAllComment();
         // 画面遷移先を指定
         mav.setViewName("/top");
         // 投稿データオブジェクトを保管
         mav.addObject("contents", contentData);
-        //　コメント一件取得
-        List<CommentForm> commentData = commentService.findAllComment();
         // commentDataでmavにセットする。
         mav.addObject("comments",commentData);
+        //　コメント投稿のバリデーションがCommentFormに入っている。
+        List<String> errorMessages = (List<String>) session.getAttribute("errorMessages");
+        mav.addObject("errorMessages", errorMessages);
+        session.removeAttribute("errorMessages");
         return mav;
     }
 
@@ -51,6 +63,7 @@ public class ForumController {
         mav.setViewName("/new");
         // 準備した空のFormを保管
         mav.addObject("formModel", reportForm);
+
         return mav;
     }
 
@@ -58,7 +71,17 @@ public class ForumController {
      * 新規投稿処理
      */
     @PostMapping("/add")
-    public ModelAndView addContent(@ModelAttribute("formModel") ReportForm reportForm) {
+    public ModelAndView addContent(@Validated @ModelAttribute("formModel") ReportForm reportForm,
+                                   BindingResult result) {
+        //バリデーションでエラーがあった場合はtrueが帰ってくる。
+        if(result.hasErrors()) {
+            ModelAndView mav = new ModelAndView();
+            //エラーの時は新規投稿画面でエラーを出したいから遷移先を指定
+            mav.setViewName("/new");
+            //引数をそのまま返す。
+            mav.addObject("formModel", reportForm);
+            return mav;
+        }
         // 投稿をテーブルに格納
         reportService.saveReport(reportForm);
         // rootへリダイレクト
@@ -97,7 +120,15 @@ public class ForumController {
      */
     @PutMapping("/update/{id}")
     public ModelAndView updateContent(@PathVariable Integer id,
-                                      @ModelAttribute("formModel") ReportForm report) {
+                                      @Validated @ModelAttribute("formModel") ReportForm report,BindingResult result) {
+        if(result.hasErrors()) {
+            ModelAndView mav = new ModelAndView();
+            //エラーの時は新規投稿画面でエラーを出したいから遷移先を指定
+            mav.setViewName("/edit");
+            //引数をそのまま返す。
+            mav.addObject("formModel", report);
+            return mav;
+        }
         //UrlParameterのidを更新するentityにセット
         report.setId(id);
         //新規投稿編集で渡ってきた値をDBにsaveする。
@@ -110,9 +141,13 @@ public class ForumController {
      * コメント投稿処理
      */
     @PostMapping("/commentAdd")
-    public ModelAndView addComment(@ModelAttribute("formModel") CommentForm comment) {
+    public ModelAndView addComment(@Validated @ModelAttribute("formModel") CommentForm commentForm, BindingResult result) {
+        if(result.hasErrors()) {
+            session.setAttribute("errorMessages", commentForm);
+            return new ModelAndView("redirect:/");
+        }
         // 投稿をテーブルに格納
-        commentService.saveComment(comment);
+        commentService.saveComment(commentForm);
         // rootへリダイレクト
         return new ModelAndView("redirect:/");
     }
