@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -38,16 +39,20 @@ public class ForumController {
         List<ReportForm> contentData = reportService.findAllReport(start, end);
         //コメント一件取得
         List<CommentForm> commentData = commentService.findAllComment();
+        //エラーメッセージをセッションからとっている。
+        List<String> errorMessages = (List<String>) session.getAttribute("errorMessages");
+        Integer reportId = (Integer) session.getAttribute("errorReportId");
         // 画面遷移先を指定
         mav.setViewName("/top");
-        // 投稿データオブジェクトを保管
+
         mav.addObject("contents", contentData);
-        // commentDataでmavにセットする。
         mav.addObject("comments",commentData);
-        //　コメント投稿のバリデーションがCommentFormに入っている。
-        List<String> errorMessages = (List<String>) session.getAttribute("errorMessages");
         mav.addObject("errorMessages", errorMessages);
+        mav.addObject("errorReportId",reportId);
+
         session.removeAttribute("errorMessages");
+        session.removeAttribute("errorReportId");
+
         return mav;
     }
 
@@ -143,7 +148,12 @@ public class ForumController {
     @PostMapping("/commentAdd")
     public ModelAndView addComment(@Validated @ModelAttribute("formModel") CommentForm commentForm, BindingResult result) {
         if(result.hasErrors()) {
-            session.setAttribute("errorMessages", commentForm);
+            List<String> errorMessages = new ArrayList<>();
+            for(FieldError error : result.getFieldErrors()) {
+                  errorMessages.add(error.getDefaultMessage());
+            }
+            session.setAttribute("errorMessages",errorMessages );
+            session.setAttribute("errorReportId", commentForm.getReportId());
             return new ModelAndView("redirect:/");
         }
         // 投稿をテーブルに格納
@@ -172,7 +182,15 @@ public class ForumController {
      */
     @PutMapping("/commentUpdate/{id}")
     public ModelAndView commentUpdateContent(@PathVariable Integer id,
-                                            @ModelAttribute("formModel") CommentForm comment) {
+                                             @Validated@ModelAttribute("formModel") CommentForm comment,BindingResult result) {
+        if(result.hasErrors()) {
+            ModelAndView mav = new ModelAndView();
+            //エラーの時は新規投稿画面でエラーを出したいから遷移先を指定
+            mav.setViewName("/commentEdit");
+            //引数をそのまま返す。
+            mav.addObject("formModel", comment);
+            return mav;
+        }
         //UrlParameterのidを更新するentityにセット
         comment.setId(id);
         //新規投稿編集で渡ってきた値をDBにsaveする。

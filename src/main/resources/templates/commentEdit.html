@@ -10,6 +10,11 @@
     <h2>編集</h2>
 </div>
 <div class="main-contents">
+    <div th:object="${formModel}" >
+        <!--    th:errors="*{content}"の役割はBindingResult の中で、contentフィールド(contentにつけたNotBlank)に関連付けられているエラーメッセージを出力-->
+        <div class="message-icon" th:if="${#fields.hasErrors('content')}"  th:errors="*{content}">
+        </div>
+    </div>
     <form th:action="@{/commentUpdate/{id}(id=${formModel.id})}" th:object="${formModel}" th:method="put">
         <div class="form-area">
             <label>投稿内容</label>
